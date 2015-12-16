@@ -22,7 +22,7 @@ function varargout = MonkeyPumpControl(varargin)
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Last Modified by GUIDE v2.5 24-Jul-2013 16:06:00
+% Last Modified by GUIDE v2.5 15-Dec-2015 12:49:57
 
 %%%%%%%% Begin initialization code - DO NOT EDIT %%%%%%%%%%%%%%%%%%%%%%%%%
 gui_Singleton = 1;
@@ -487,6 +487,8 @@ function bolusButton1_Callback(hObject, ~, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%injects 1mL bolus of drug 1
+
 if ~get(handles.timer,'UserData')                                           % ONLY WHILE NOT TIMER
 if strcmp(get(handles.timer,'Running'),'on'); stop(handles.timer); end;     % STOP THE TIMER
 set(hObject,'Enable','off');                                                % DISABLE BUTTON
@@ -509,6 +511,38 @@ set(hObject,'Enable','on');                                                 % EN
 if strcmp(get(handles.timer,'Running'),'off'); start(handles.timer); end;   % RESTART THE TIMER
 end
 end
+
+% --- Executes on button press in bolusButton1A.
+function bolusButton1A_Callback(hObject, eventdata, handles)
+% hObject    handle to bolusButton1A (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%injects 0.2mL bolus of drug 1
+
+if ~get(handles.timer,'UserData')                                           % ONLY WHILE NOT TIMER
+if strcmp(get(handles.timer,'Running'),'on'); stop(handles.timer); end;     % STOP THE TIMER
+set(hObject,'Enable','off');                                                % DISABLE BUTTON
+
+goFlag = changeLight(handles.pumpLight1);                                   % IS PUMP RUNNING?
+changeLight(handles.pumpLight1,'o','w',1);                                  % WHITE PUMP INDICATOR
+updateRate(handles.s,handles.c1.a,'2100',handles.pumpLight1); pause(0.35);  % SET RATE AT MAX FOR 1.75s
+pumpRate = num2str(handles.c1.pumpDose*handles.c1.drug.doseFactor,3);       % GET PUMP RATE
+updateRate(handles.s,handles.c1.a,pumpRate,handles.pumpLight1);             % RESTORE PUMP RATE
+
+if goFlag                                                                   % IF PUMP WAS RUNNING
+    changeLight(handles.pumpLight1,'o',[0 1 0],goFlag);                     % GREEN PUMP INDICATOR
+else                                                                        % OTHERWISE
+    cmd = sprintf('%s STP',handles.c1.a); sendCmd(handles.s,cmd);           % STOP THE PUMP
+    changeLight(handles.pumpLight1,'o',[.5 .5 .5],goFlag);                  % GRAY PUMP INDICATOR
+end
+
+writeData(get(handles.fileName,'UserData'),handles.fid,'P1','0.2 ML BOLUS');  % WRITE TO A FILE
+set(hObject,'Enable','on');                                                 % ENABLE BUTTON
+if strcmp(get(handles.timer,'Running'),'off'); start(handles.timer); end;   % RESTART THE TIMER
+end
+end
+
 
 % --- Executes on button press in bolusButton2.
 function bolusButton2_Callback(hObject, ~, handles)
@@ -930,3 +964,6 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
 % Hint: delete(hObject) closes the figure
 % delete(hObject);
 end
+
+
+
