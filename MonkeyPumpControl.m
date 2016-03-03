@@ -497,9 +497,11 @@ if strcmp(get(handles.timer,'Running'),'on'); stop(handles.timer); end;     % ST
 set(hObject,'Enable','off');                                                % DISABLE BUTTON
 
 goFlag = changeLight(handles.pumpLight1);                                   % IS PUMP RUNNING?
-changeLight(handles.pumpLight1,'o','w',1);                                  % WHITE PUMP INDICATOR
-updateRate(handles.s,handles.c1.a,handles.c1.syringe.rateMax,handles.pumpLight1);   % SET RATE AT MAX 
+changeLight(handles.pumpLight1,'o','w',1);% WHITE PUMP INDICATOR
+pumpRate=num2str(handles.c1.syringe.rateMax);
+updateRate(handles.s,handles.c1.a,pumpRate,handles.pumpLight1);   % SET RATE AT MAX 
 pause(3600/handles.c1.syringe.rateMax+.04); %WAIT appropriate time (add extra for communication)
+%pause(30)
 pumpRate = num2str(handles.c1.pumpDose*handles.c1.drug.doseFactor,3);       % GET PUMP RATE
 updateRate(handles.s,handles.c1.a,pumpRate,handles.pumpLight1);             % RESTORE PUMP RATE
 
@@ -529,8 +531,9 @@ if strcmp(get(handles.timer,'Running'),'on'); stop(handles.timer); end;     % ST
 set(hObject,'Enable','off');                                                % DISABLE BUTTON
 
 goFlag = changeLight(handles.pumpLight1);                                   % IS PUMP RUNNING?
-changeLight(handles.pumpLight1,'o','w',1);                                  % WHITE PUMP INDICATOR
-updateRate(handles.s,handles.c1.a,handlesc1.syringe.rateMax,handles.pumpLight1); 
+changeLight(handles.pumpLight1,'o','w',1); % WHITE PUMP INDICATOR
+pumpRate=num2str(handles.c1.syringe.rateMax);
+updateRate(handles.s,handles.c1.a,pumpRate,handles.pumpLight1); 
 pause(0.2*3600/handles.c1.syringe.rateMax+.04);  
 pumpRate = num2str(handles.c1.pumpDose*handles.c1.drug.doseFactor,3);       % GET PUMP RATE
 updateRate(handles.s,handles.c1.a,pumpRate,handles.pumpLight1);             % RESTORE PUMP RATE
@@ -561,7 +564,8 @@ set(hObject,'Enable','off');                                                % DI
 
 goFlag = changeLight(handles.pumpLight2);                                   % IS PUMP RUNNING?
 changeLight(handles.pumpLight2,'o','w',1);                                  % WHITE PUMP INDICATOR
-updateRate(handles.s,handles.c2.a,handles.c2.syringe.rateMax,handles.pumpLight2); 
+pumpRate=num2str(handles.c2.syringe.rateMax);
+updateRate(handles.s,handles.c2.a,pumpRate,handles.pumpLight2); 
 pause(3600/handles.c2.syringe.rateMax+.04);  
 pumpRate = num2str(handles.c2.pumpDose*handles.c2.drug.doseFactor,3);       % GET PUMP RATE
 updateRate(handles.s,handles.c2.a,pumpRate,handles.pumpLight2);             % RESTORE PUMP RATE
