@@ -82,8 +82,8 @@ c2.drug.doseInitial = 0.15;
 
 % SYRINGE PARAMETERS
 c1.syringe.volume = 60;         % in mL
-c1.syringe.diameter = 26.3;     % in mm - was 29.7
-c1.syringe.rateMax = 2100;      % in mL/hour
+c1.syringe.diameter = 26.64;     % in mm - was 29.7 (setting from pump book)
+c1.syringe.rateMax = 1705;      % in mL/hour (setting from pump book)
 
 c2.syringe = c1.syringe;
 
@@ -498,7 +498,8 @@ set(hObject,'Enable','off');                                                % DI
 
 goFlag = changeLight(handles.pumpLight1);                                   % IS PUMP RUNNING?
 changeLight(handles.pumpLight1,'o','w',1);                                  % WHITE PUMP INDICATOR
-updateRate(handles.s,handles.c1.a,'2100',handles.pumpLight1); pause(1.75);  % SET RATE AT MAX FOR 1.75s
+updateRate(handles.s,handles.c1.a,handles.c1.syringe.rateMax,handles.pumpLight1);   % SET RATE AT MAX 
+pause(3600/handles.c1.syringe.rateMax+.04); %WAIT appropriate time (add extra for communication)
 pumpRate = num2str(handles.c1.pumpDose*handles.c1.drug.doseFactor,3);       % GET PUMP RATE
 updateRate(handles.s,handles.c1.a,pumpRate,handles.pumpLight1);             % RESTORE PUMP RATE
 
@@ -529,7 +530,8 @@ set(hObject,'Enable','off');                                                % DI
 
 goFlag = changeLight(handles.pumpLight1);                                   % IS PUMP RUNNING?
 changeLight(handles.pumpLight1,'o','w',1);                                  % WHITE PUMP INDICATOR
-updateRate(handles.s,handles.c1.a,'2100',handles.pumpLight1); pause(0.35);  % SET RATE AT MAX FOR 1.75s
+updateRate(handles.s,handles.c1.a,handlesc1.syringe.rateMax,handles.pumpLight1); 
+pause(0.2*3600/handles.c1.syringe.rateMax+.04);  
 pumpRate = num2str(handles.c1.pumpDose*handles.c1.drug.doseFactor,3);       % GET PUMP RATE
 updateRate(handles.s,handles.c1.a,pumpRate,handles.pumpLight1);             % RESTORE PUMP RATE
 
@@ -559,7 +561,8 @@ set(hObject,'Enable','off');                                                % DI
 
 goFlag = changeLight(handles.pumpLight2);                                   % IS PUMP RUNNING?
 changeLight(handles.pumpLight2,'o','w',1);                                  % WHITE PUMP INDICATOR
-updateRate(handles.s,handles.c2.a,'2100',handles.pumpLight2); pause(1.75);  % SET RATE AT MAX FOR 1.75s
+updateRate(handles.s,handles.c2.a,handles.c2.syringe.rateMax,handles.pumpLight2); 
+pause(3600/handles.c2.syringe.rateMax+.04);  
 pumpRate = num2str(handles.c2.pumpDose*handles.c2.drug.doseFactor,3);       % GET PUMP RATE
 updateRate(handles.s,handles.c2.a,pumpRate,handles.pumpLight2);             % RESTORE PUMP RATE
 
