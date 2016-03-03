@@ -82,7 +82,7 @@ c2.drug.doseInitial = 0.15;
 
 % SYRINGE PARAMETERS
 c1.syringe.volume = 60;         % in mL
-c1.syringe.diameter = 29.7;     % in mm
+c1.syringe.diameter = 26.3;     % in mm - was 29.7
 c1.syringe.rateMax = 2100;      % in mL/hour
 
 c2.syringe = c1.syringe;
@@ -104,8 +104,11 @@ if ~isempty(alreadyOpen); fclose(alreadyOpen); delete(alreadyOpen); end;
 s = serial(c1.pump.comPort,'BaudRate',c1.pump.baudRate,...                  % OPEN THE PUMPS
     'Terminator',c1.pump.terminator);    fopen(s);
 
-cmd = sprintf('%s STP',c1.a);                           sendCmd(s,cmd);     % STOP THE PUMPS
-cmd = sprintf('%s STP',c2.a);                           sendCmd(s,cmd);
+
+cmd = sprintf('%s STP',c1.a);                          
+sendCmd(s,cmd);     % STOP THE PUMPS
+cmd = sprintf('%s STP',c2.a);                           
+sendCmd(s,cmd);
 cmd = sprintf('%s CLD INF',c1.a);                       sendCmd(s,cmd);     % CLEAR DISPENSED VOLUMES
 cmd = sprintf('%s CLD INF',c2.a);                       sendCmd(s,cmd);
 cmd = sprintf('%s CLD WDR',c1.a);                       sendCmd(s,cmd);
@@ -206,7 +209,7 @@ function initializeButton_Callback(hObject, ~, handles) %#ok<*DEFNU>
 % handles    structure with handles and user data (see GUIDATA)
 
 % SET UP A DATA FILE
-handles.fn = lower(strcat(handles.c1.subject.name,'.pd0'));
+handles.fn = lower(strcat('c:\pump logs\',handles.c1.subject.name,'.pd0'));
 handles.fid = fopen(handles.fn,'a');
 set(handles.fileName,'String',handles.fn);  % SET FILENAME TEXT
 set(handles.editSave,'String',handles.fn);
