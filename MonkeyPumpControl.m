@@ -763,20 +763,20 @@ tR = volR/userRate; if isinf(tR); tStr = ''; else                           % TI
 tStr = sprintf('%g hr %g min left',floor(tR),floor(mod(60*tR,60))); end     % UPDATE TIME REMAINING
 set(handles.timeLeft1,'String',tStr);
 
-if tR < 1                                                                   % IF LESS THAN 1 HOUR LEFT
+if tR < 1 || volR < 7                                                       % IF LESS THAN 1 HOUR LEFT OR LESS THAN 7mL
     lowFlag = changeLight(handles.syringeLight1);                           % GET WARNING STATE
     
-    if lowFlag < 1 && tR > 0.5                                              % IF NO FLAG AND HALF+ HOUR LEFT
+    if lowFlag < 1 && (tR > 0.5 || volR>5)                                  % IF NO FLAG AND HALF+ HOUR LEFT
         changeLight(handles.syringeLight1,'^','b',1);                       % BLUE SYRINGE INDICATOR
         sound(sin(1:1000),3000);                                            % SINGLE BEEP
-        warn = {'Pump 1 has < 1 hour left!' 'Refill soon.'};                % WARNING STRING
+        warn = {'Pump 1 running low!' 'Refill soon.'};                      % WARNING STRING
         PumpWarning('title','Syringe Warning','string',warn);               % WARNING POP-UP
     end
     
-    if lowFlag < 2 && tR < 0.5                                              % IF NO FLAG AND HALF- HOUR LEFT
+    if lowFlag < 2 && (tR < 0.5 || volR < 6)                                % IF NO FLAG AND HALF- HOUR LEFT
         changeLight(handles.syringeLight1,'^','b',2);                       % BLUE SYRINGE INDICATOR
         sound(sin(1:1000),3000);                                            % SINGLE BEEP
-        warn = {'Pump 1 has < .5 hours left!' 'Refill now!'};               % WARNING STRING
+        warn = {'Pump 1 running very low!!' 'Refill now!'};                 % WARNING STRING
         PumpWarning('title','Syringe Warning','string',warn);               % WARNING POP-UP
     end
     
