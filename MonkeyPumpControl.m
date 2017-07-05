@@ -22,7 +22,7 @@ function varargout = MonkeyPumpControl(varargin)
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Last Modified by GUIDE v2.5 15-Dec-2015 12:49:57
+% Last Modified by GUIDE v2.5 16-May-2017 15:44:23
 
 %%%%%%%% Begin initialization code - DO NOT EDIT %%%%%%%%%%%%%%%%%%%%%%%%%
 gui_Singleton = 1;
@@ -53,7 +53,7 @@ function [c1,c2,s] = initializePump
 % THE PUMP, OR THE CONNECTION TO THE COMPUER!
 
 % SUBJECT INFORMATION
-c1.subject.name =   input('subject name: ','s');
+c1.subject.name = input('subject name: ','s');
 c1.subject.weight = round(100*input('weight (in kg): '))/100;
 
 c2.subject = c1.subject;
@@ -123,6 +123,9 @@ cmd = sprintf('%s DIR INF',c1.a);                       sendCmd(s,cmd);     % SE
 cmd = sprintf('%s DIR INF',c2.a);                       sendCmd(s,cmd);
 cmd = sprintf('%s RAT 0 MH',c1.a);                      sendCmd(s,cmd);     % SET ZERO PUMP RATE
 cmd = sprintf('%s RAT 0 MH',c2.a);                      sendCmd(s,cmd);
+
+cmd = sprintf('%s AL 1', c1.a);                         sendCmd(s, cmd);    % enable alarms
+cmd = sprintf('%s AL 1', c2.a);                         sendCmd(s, cmd);    % enable alarms
 
 disp('Pumps are ready!');
 end
@@ -723,11 +726,20 @@ switch str(4)                                                               % CH
             PumpWarning('title','Go Mismatch','string',error);              % WARNING POP-UP
         end
         
+    case 'A'                                                               % Alarm active
+        cmd = sprintf('%s STP',handles.c1.a); sendCmd(handles.s,cmd);      % STOP PUMP
+        writeData(writeFlag,handles.fid,'P1','ERROR: Alarm ');             % WRITE ERROR TO FILE
+        sound(sin(1:5000), 7000);                                          % SINGLE BEEP
+        error = {'Pump 1 Alarm!' 'Now stopped.'};                          % WARNING MESSAGE
+        PumpWarning('title','Go Mismatch','string',error);                 % WARNING POP-UP
+        % create a fake response str
+        str = '0000000000000000000';
+        
     otherwise
         writeData(writeFlag,handles.fid,'P1','ERROR: UNKNOWN');             % WRITE ERROR TO FILE
         sound(sin(1:1000),3000);                                            % SINGLE BEEP
         error = {'Pump 1 satus undefined!','Check hardware.'};              % WARNING MESSAGE
-        PumpWarning('title','Go Mismatch','string',error);                  % WARNING POP-UP
+        PumpWarning('title','Alarm','string',error);                        % WARNING POP-UP
 end
 
 userRate = handles.c1.pumpDose*handles.c1.drug.doseFactor;                  % GET USER SPECIFIED RATE
@@ -741,7 +753,6 @@ if ~(abs(userRate-pumpRate) < .1 && strcmp(str(10:11),'MH'))               % IF 
     error = {'Pump 1 rate =/= user rate!' 'Pump 1 set to user rate.'};      % WARNING MESSAGE
     PumpWarning('title','Rate Mismatch','string',error);                    % WARNING POP-UP
 end
-
 cmd = sprintf('%s DIS',handles.c1.a); str = sendCmd(handles.s,cmd,19);      % QUERY PUMP 1 VOLUME DISPENSED
 volI = str2double(str(6:10));                                               % VOLUME INFUSED SINCE RESET
 volS = handles.c1.syringe.volume - 2;                                       % VOLUME OF FULL SYRINGE (-2mL)
@@ -809,6 +820,15 @@ switch str(4)                                                               % CH
             error = {'Pump 2 was stopped!' 'Now running.'};                 % WARNING MESSAGE
             PumpWarning('title','Go Mismatch','string',error);              % WARNING POP-UP
         end
+        
+    case 'A'                                                                % Alarm active
+        cmd = sprintf('%s STP',handles.c2.a); sendCmd(handles.s,cmd);      % STOP PUMP
+        writeData(writeFlag,handles.fid,'P1','ERROR: Alarm ');             % WRITE ERROR TO FILE
+        sound(sin(1:5000), 7000)                                           % SINGLE BEEP
+        error = {'Pump 2 Alarm!' 'Now stopped.'};                          % WARNING MESSAGE
+        PumpWarning('title','Alarm','string',error);                       % WARNING POP-UP
+        % create a fake response str
+        str = '0000000000000000000';
         
     otherwise
         writeData(writeFlag,handles.fid,'P2','ERROR: UNKNOWN');             % WRITE ERROR TO FILE
@@ -907,14 +927,34 @@ function str = sendCmd(s,cmd,nB)
 % THAT COMMAND.
 
 if nargin < 3; nB = 5; end;                                                 % DEFAULT WAIT FOR 5 BYTES
-    
+  
+recvStr = '';
 while s.BytesAvailable > 0                                                  % CLEAR THE BUFFER
-    fscanf(s,'%s',s.BytesAvailable);  pause(.001);
+   recvStr =  fscanf(s,'%s',s.BytesAvailable);  pause(.001);
 end
-fprintf(s,cmd);                                                             % SEND THE COMMAND
-while s.BytesAvailable < nB; pause(.001); end;                              % WAIT FOR THE RESPONSE
-str = fscanf(s,'%s',s.BytesAvailable);                                      % READ THE RESPONSE
 
+if(~strcmp(recvStr, ''))
+     fprintf('\n sendCmd bytes in buffer :  <%s>\n', cmd, recvStr);
+end
+
+
+fprintf(s,cmd);                                                             % SEND THE COMMAND
+timeoutDur = 2;                                                             % prevent infinite while loop
+tic
+waitTime = toc;
+while s.BytesAvailable < nB && waitTime < timeoutDur
+    pause(.001);
+    waitTime = toc;
+end;                              % WAIT FOR THE RESPONSE
+if(waitTime >= timeoutDur)
+    fprintf('\nsendCmd timed out waiting for %d bytes in response to cmd : %s\n', nB, cmd);
+    % create a fake response string with enough bytes e.g. sendCmd(cmd, 19);
+    str = '0000000000000000000'; 
+end
+
+if(s.BytesAvailable > 0)
+    str = fscanf(s,'%s',s.BytesAvailable);                                      % READ THE RESPONSE
+end
 end
 
 % --- Executes on mouse press over figure background
@@ -973,7 +1013,64 @@ function figure1_CloseRequestFcn(hObject, eventdata, handles)
 
 % Hint: delete(hObject) closes the figure
 % delete(hObject);
+
+    % is the timer still valid?
+    if(isvalid(handles.timer))  
+        % stop it if needed
+        if strcmp(get(handles.timer,'Running'),'on')
+            stop(handles.timer); 
+        end; 
+        delete(handles.timer);                                                      % REMOVE THE TIMER
+
+        cmd = sprintf('%s STP',handles.c1.a); sendCmd(handles.s,cmd);               % STOP THE PUMPS
+        cmd = sprintf('%s STP',handles.c2.a); sendCmd(handles.s,cmd);
+
+    end
+
+    % close the GUI
+    delete(hObject);
 end
 
 
+
+
+
+
+% --- Executes on key release with focus on figure1 or any of its controls.
+function figure1_WindowKeyReleaseFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.FIGURE)
+%	Key: name of the key that was released, in lower case
+%	Character: character interpretation of the key(s) that was released
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) released
+% handles    structure with handles and user data (see GUIDATA)
+% fprintf('\nkey = %c, char = %c', eventdata.Key, eventdata.Character);
+% Test Beep function
+numBeeps = 3;
+sleepDur = 1.8;
+
+if(eventdata.Key == 'a')
+    cmd = sprintf('%s AL ', handles.c1.a);                                 % pump1, query alarm status
+    returnStr = sendCmd(handles.s, cmd);
+    if(returnStr(5) == '1')
+        cmd = sprintf('%s BUZ 1 %d', handles.c1.a, numBeeps);                  % Beep c1 3 times
+        sendCmd(handles.s, cmd);                                               
+    else
+        fprintf('\nPump1 alarm not active\n');
+    end
+    
+    pause(sleepDur);
+    
+    cmd = sprintf('%s AL ', handles.c2.a);                                 % pump2, query alarm status
+    returnStr = sendCmd(handles.s, cmd);    
+    if(returnStr(5) == '1')
+        cmd = sprintf('%s BUZ 1 %d', handles.c2.a, numBeeps);                  % Beep c1 3 times
+        sendCmd(handles.s, cmd);                                               
+    else
+        fprintf('\nPump2 alarm not active\n');
+    end    
+                                             
+    pause(sleepDur);
+end
+end
 
