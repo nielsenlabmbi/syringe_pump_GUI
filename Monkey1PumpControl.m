@@ -77,7 +77,7 @@ c1.syringe.rateMax = 1705;      % in mL/hour (setting from pump book)
 
 
 % PUMP PARAMETERS, EVERYTHING EXCEPT ADDRESS SHOULD BE IDENTICAL
-c1.pump.comPort = 'COM3';       % check this port on computer before running
+c1.pump.comPort = '/dev/ttyUSB0/';       % check this port on computer before running
 c1.pump.baudRate = 19200;       % Baudrate, check with the pump settings
 c1.pump.terminator = 'CR/LF';   % carriage return / line feed
 c1.pump.address = 0;            % Address, check with the pump settings
