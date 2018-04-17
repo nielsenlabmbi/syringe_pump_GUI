@@ -77,7 +77,7 @@ c1.syringe.rateMax = 1705;      % in mL/hour (setting from pump book)
 
 
 % PUMP PARAMETERS, EVERYTHING EXCEPT ADDRESS SHOULD BE IDENTICAL
-c1.pump.comPort = '/dev/ttyUSB0/';       % check this port on computer before running
+c1.pump.comPort = '/dev/ttyUSB0';       % check this port on computer before running
 c1.pump.baudRate = 19200;       % Baudrate, check with the pump settings
 c1.pump.terminator = 'CR/LF';   % carriage return / line feed
 c1.pump.address = 0;            % Address, check with the pump settings
@@ -173,7 +173,7 @@ function initializeButton_Callback(hObject, ~, handles) %#ok<*DEFNU>
 % handles    structure with handles and user data (see GUIDATA)
 
 % SET UP A DATA FILE
-handles.fn = lower(strcat('c:\pump logs\',handles.c1.subject.name,'.pd0'));
+handles.fn = fullfile('/home/nielsenlab/pump_logs',[handles.c1.subject.name,'.pd0']);
 handles.fid = fopen(handles.fn,'a');
 set(handles.fileName,'String',handles.fn);  % SET FILENAME TEXT
 set(handles.editSave,'String',handles.fn);
@@ -456,7 +456,7 @@ fclose(handles.fid);                                                        % CL
 
 fclose(handles.s); delete(handles.s);                                       % REMOVE THE PUMPS
 
-close MonkeyPumpControl;                                                    % REMOVE THE GUI
+close Monkey1PumpControl;                                                    % REMOVE THE GUI
 close force;    % NECESSARY BECAUSE I DISABLED GUI CLOSING
 fprintf('Pump control GUI is closed!\n');
 end
